@@ -15,19 +15,20 @@ int main() {    setlocale(0, "");
     WIN32_FILE_ATTRIBUTE_DATA fAttr;
     SYSTEMTIME sCreate,sAcces,sWrite, sTime, sysOneHr;
     FILETIME oneHr,fCreate,fAcces,fWrite;
-    TCHAR fPath[18]="C:\\dir\\output.txt";
+
     char tmpBuf[200];
     DWORD fSize;
     TIME_ZONE_INFORMATION currTZ;
     GetTimeZoneInformation(&currTZ);
 
-
+    string fPath;
+    cin>>fPath;
 
         try {
 
 
             //---------------------СЧИТАТЬ, ВЫВЕСТИ АТРИБУТЫ И ВРЕМЯ----------------------------
-            GetFileAttributesEx(fPath,GetFileExInfoStandard,&fAttr);
+            GetFileAttributesEx(fPath.c_str(),GetFileExInfoStandard,&fAttr);
             GetSystemTime(&sTime);
             SystemTimeToTzSpecificLocalTime(&currTZ,&sTime,&sTime);
             FileTimeToSystemTime(&fAttr.ftCreationTime,&sCreate);
@@ -49,28 +50,28 @@ int main() {    setlocale(0, "");
                     <<" " NF sWrite.wHour<<":" NF sWrite.wMinute<<":" NF sWrite.wSecond<<endl;
 
             //-------------СДЕЛАТЬ СКРЫТЫМ, СДЕЛАТЬ ЗАПИСЬ, ВЫВЕСТИ ВРЕМЯ ЗАПИСИ-------------------
-            hFile=CreateFile(fPath,GENERIC_READ | GENERIC_WRITE,
+            hFile=CreateFile(fPath.c_str(),GENERIC_READ | GENERIC_WRITE,
                              FILE_SHARE_WRITE | FILE_SHARE_READ,NULL,OPEN_EXISTING,NULL,NULL);
 
-            SetFileAttributesA(fPath,FILE_ATTRIBUTE_HIDDEN);
+            SetFileAttributesA(fPath.c_str(),FILE_ATTRIBUTE_HIDDEN);
             cout<<"Файл скрыт"<<endl;
             ReadFile(hFile, tmpBuf, sizeof(tmpBuf), &fSize, NULL);
             stringstream ss;
             ss<<"\r\n"<<"changed at " NF sTime.wHour<<" : " NF sTime.wMinute<<" by Dmitry Nikiforov";
             if (WriteFile(hFile, ss.str().c_str(), ss.str().size(), &fSize, NULL))
-                cout <<"файл "<<fPath<<" успешно изменен"<<endl;
+                cout <<"файл "<<fPath.c_str()<<" успешно изменен"<<endl;
 
             CloseHandle(hFile);
 
 
-            GetFileAttributesEx(fPath,GetFileExInfoStandard,&fAttr);
+            GetFileAttributesEx(fPath.c_str(),GetFileExInfoStandard,&fAttr);
             FileTimeToSystemTime(&fAttr.ftLastWriteTime,&sWrite);
             SystemTimeToTzSpecificLocalTime(&currTZ,&sWrite,&sWrite);
             cout<<"Время последнего изменения : " NF sWrite.wHour<<":" NF sWrite.wMinute<<":" NF sWrite.wSecond<<endl;
 
 
             // ------------------- ОТКАТИТЬ ВРЕМЯ ЗАПИСИ НА ЧАС НАЗАД---------------------------
-            hFile=CreateFile(fPath,GENERIC_READ | GENERIC_WRITE,
+            hFile=CreateFile(fPath.c_str(),GENERIC_READ | GENERIC_WRITE,
                             FILE_SHARE_WRITE | FILE_SHARE_READ,NULL,OPEN_EXISTING,NULL,NULL);
 
             GetFileTime(hFile,NULL,NULL,&oneHr);
@@ -79,16 +80,16 @@ int main() {    setlocale(0, "");
             SystemTimeToFileTime(&sysOneHr,&oneHr);
             SetFileTime(hFile,NULL,NULL,&oneHr);
             CloseHandle(hFile);
-            GetFileAttributesEx(fPath,GetFileExInfoStandard,&fAttr);
+            GetFileAttributesEx(fPath.c_str(),GetFileExInfoStandard,&fAttr);
             FileTimeToSystemTime(&fAttr.ftLastWriteTime,&sWrite);
             SystemTimeToTzSpecificLocalTime(&currTZ,&sWrite,&sWrite);
             cout<<"Время последнего изменения : " NF sWrite.wHour<<":" NF sWrite.wMinute<<":" NF sWrite.wSecond<<endl;
 
             //--------------------------- ДАТА СОЗДАНИЯ +1, ДОСТУПА И ЗАПИСИ -1
-            hFile=CreateFile(fPath,GENERIC_READ | GENERIC_WRITE,
+            hFile=CreateFile(fPath.c_str(),GENERIC_READ | GENERIC_WRITE,
                              FILE_SHARE_WRITE | FILE_SHARE_READ,NULL,OPEN_EXISTING,NULL,NULL);
 
-            GetFileAttributesEx(fPath,GetFileExInfoStandard,&fAttr);
+            GetFileAttributesEx(fPath.c_str(),GetFileExInfoStandard,&fAttr);
             FileTimeToSystemTime(&fAttr.ftCreationTime,&sCreate);
             FileTimeToSystemTime(&fAttr.ftLastAccessTime,&sAcces);
             FileTimeToSystemTime(&fAttr.ftLastWriteTime,&sWrite);
@@ -102,7 +103,7 @@ int main() {    setlocale(0, "");
 
 
 
-            GetFileAttributesEx(fPath,GetFileExInfoStandard,&fAttr);
+            GetFileAttributesEx(fPath.c_str(),GetFileExInfoStandard,&fAttr);
             FileTimeToSystemTime(&fAttr.ftCreationTime,&sCreate);
             FileTimeToSystemTime(&fAttr.ftLastAccessTime,&sAcces);
             FileTimeToSystemTime(&fAttr.ftLastWriteTime,&sWrite);
@@ -114,7 +115,7 @@ int main() {    setlocale(0, "");
 
         }
         catch(...){
-            cout << "ERROR" << endl;
+            cout << "ERROR open" << endl;
             return 0;
         }
 
