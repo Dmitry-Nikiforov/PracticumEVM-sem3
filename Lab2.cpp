@@ -10,7 +10,7 @@
 
 using namespace std;
 
-int main() {    setlocale(0, "");
+int main() {
     HANDLE hFile=NULL;
     WIN32_FILE_ATTRIBUTE_DATA fAttr;
     SYSTEMTIME sCreate,sAcces,sWrite, sTime, sysOneHr;
