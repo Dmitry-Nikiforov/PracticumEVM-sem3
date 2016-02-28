@@ -6,7 +6,7 @@
 #include <sstream>
 #include <iomanip>
 
-#define NF <<setw(2)<<setfill('0')<<
+#define NF <<setw(2)<<setfill('0')<< //макрос для выравнивания чисел в формате 0х.хх.хххх
 
 using namespace std;
 
@@ -28,20 +28,23 @@ int main() {    setlocale(0, "");
 
 
             //---------------------СЧИТАТЬ, ВЫВЕСТИ АТРИБУТЫ И ВРЕМЯ----------------------------
+            //вся эта лабуда считывает время создания, редактирования и последнего открытия
+        
+            
             GetFileAttributesEx(fPath.c_str(),GetFileExInfoStandard,&fAttr);
             GetSystemTime(&sTime);
-            SystemTimeToTzSpecificLocalTime(&currTZ,&sTime,&sTime);
-            FileTimeToSystemTime(&fAttr.ftCreationTime,&sCreate);
-            FileTimeToSystemTime(&fAttr.ftLastAccessTime,&sAcces);
-            FileTimeToSystemTime(&fAttr.ftLastWriteTime,&sWrite);
-            SystemTimeToTzSpecificLocalTime(&currTZ,&sCreate,&sCreate);
+            SystemTimeToTzSpecificLocalTime(&currTZ,&sTime,&sTime); // системное время перевести в наш часовой пояс
+            FileTimeToSystemTime(&fAttr.ftCreationTime,&sCreate); // FileTime хранить колечиство 100-наносекундных 
+            FileTimeToSystemTime(&fAttr.ftLastAccessTime,&sAcces); // интервалов начиная с 1 января 1601
+            FileTimeToSystemTime(&fAttr.ftLastWriteTime,&sWrite); // поэтому переводим в нормальную структуру
+            SystemTimeToTzSpecificLocalTime(&currTZ,&sCreate,&sCreate); // затем в нашу локаль
             SystemTimeToTzSpecificLocalTime(&currTZ,&sAcces,&sAcces);
             SystemTimeToTzSpecificLocalTime(&currTZ,&sWrite,&sWrite);
             cout<<"Атрибуты :";
             if (fAttr.dwFileAttributes & FILE_ATTRIBUTE_READONLY)   cout<<" Read-only файл ";
             if (fAttr.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN)   cout<<" Скрытый файл ";
             cout<<endl<<endl;
-
+            //выводим cout-ом с макросом NF (описан вверху)
             cout<<"Время создания : " NF sCreate.wDay<<"." NF sCreate.wMonth<<"." NF sCreate.wYear
                     <<" " NF sCreate.wHour<<":" NF sCreate.wMinute<<":" NF sCreate.wSecond<<endl;
             cout<<"Время последнего обращения : " NF sAcces.wDay<<"." NF sAcces.wMonth<<"." NF sAcces.wYear
@@ -53,8 +56,8 @@ int main() {    setlocale(0, "");
             hFile=CreateFile(fPath.c_str(),GENERIC_READ | GENERIC_WRITE,
                              FILE_SHARE_WRITE | FILE_SHARE_READ,NULL,OPEN_EXISTING,NULL,NULL);
 
-            SetFileAttributesA(fPath.c_str(),FILE_ATTRIBUTE_HIDDEN);
-            cout<<"Файл скрыт"<<endl;
+            SetFileAttributesA(fPath.c_str(),FILE_ATTRIBUTE_HIDDEN); // (!) здесь нужно проверить не вернет ли эта штука false а если вернет
+            cout<<"Файл скрыт"<<endl;                               // то ловить исключение, т.к. файл не всегда можно сделать скрытым
             ReadFile(hFile, tmpBuf, sizeof(tmpBuf), &fSize, NULL);
             stringstream ss;
             ss<<"\r\n"<<"changed at " NF sTime.wHour<<" : " NF sTime.wMinute<<" by Dmitry Nikiforov";
@@ -71,6 +74,9 @@ int main() {    setlocale(0, "");
 
 
             // ------------------- ОТКАТИТЬ ВРЕМЯ ЗАПИСИ НА ЧАС НАЗАД---------------------------
+            
+            //(!!!) здесь нужно уменьшать не просто --, а проверять не нулевой час, минута и т.д. 
+            // чтобы перевести остальные показатели назад например 00:12 20.02.2014 и откатить на час нужно получить 23:12 19.02.2014
             hFile=CreateFile(fPath.c_str(),GENERIC_READ | GENERIC_WRITE,
                             FILE_SHARE_WRITE | FILE_SHARE_READ,NULL,OPEN_EXISTING,NULL,NULL);
 
@@ -86,6 +92,9 @@ int main() {    setlocale(0, "");
             cout<<"Время последнего изменения : " NF sWrite.wHour<<":" NF sWrite.wMinute<<":" NF sWrite.wSecond<<endl;
 
             //--------------------------- ДАТА СОЗДАНИЯ +1, ДОСТУПА И ЗАПИСИ -1
+            
+            //тут так же только с с датами
+            
             hFile=CreateFile(fPath.c_str(),GENERIC_READ | GENERIC_WRITE,
                              FILE_SHARE_WRITE | FILE_SHARE_READ,NULL,OPEN_EXISTING,NULL,NULL);
 
