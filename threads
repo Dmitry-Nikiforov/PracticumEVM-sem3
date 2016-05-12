@@ -1,0 +1,67 @@
+#include <iostream>
+#include <Windows.h>
+#include <cmath>
+#include <time.h>
+#define THREAD 10
+
+using namespace std;
+
+HANDLE semaphore;
+HANDLE theards[THREAD];
+LPDWORD idtheards[THREAD];
+double A=0;
+int k=0;
+
+struct index
+{
+  int begin;
+  int end;
+};
+
+DWORD WINAPI MyThread (index &dist)
+{
+    double B=0;
+    for(int b=dist.begin;b<=dist.end;b++)
+    {
+        for (int s=1;s<=k;s++)
+        {
+            B+=1/(b*b+log(5*s)+8);
+        }
+    }
+    WaitForSingleObject(semaphore,INFINITE);
+    A+=B;
+    ReleaseSemaphore(semaphore,1,NULL);
+    return 0;
+}
+
+
+int main ()
+{
+    int start=0,finish=0;
+    int n=0;
+    cin>>k;
+    cin>>n;
+    index mystruct[THREAD];
+    semaphore = CreateSemaphore(0,1,1,0);
+    mystruct[0].begin=1;
+    mystruct[0].end=n/THREAD;
+    for (int i=1; i<THREAD;i++)
+    {
+        mystruct[i].begin=mystruct[i-1].end+1;
+        mystruct[i].end=mystruct[i].begin+n/THREAD-1;
+    }
+    mystruct[THREAD-1].end+=n%THREAD;
+
+    start=clock();
+    for (int i=0;i<THREAD;i++)
+    {
+        theards[i] = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)MyThread,&mystruct[i],0,idtheards[i]);
+    }
+    WaitForMultipleObjects(THREAD, theards, TRUE, INFINITE);
+    CloseHandle(semaphore);
+    finish=clock();
+    cout<<"A = "<<A<<endl;
+    cout<<"Time = "<<(finish-start)/1000.0<<endl;
+    system("pause");
+    return 0;
+}
